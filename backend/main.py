@@ -15,8 +15,8 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # Include Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(menu.router, prefix="/api/menu", tags=["menu"])
-app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
+app.include_router(menu.router, prefix="/api", tags=["menu"])
+app.include_router(orders.router, prefix="/api", tags=["orders"])
 
 @app.on_event("startup")
 def startup():
