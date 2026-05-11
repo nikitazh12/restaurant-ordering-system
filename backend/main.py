@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from backend.models import engine, Base, SessionLocal
+from backend.models import Base, engine
 from backend.routers import auth, menu, orders
 
 app = FastAPI(title="Restaurant Ordering System API")

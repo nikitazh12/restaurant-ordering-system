@@ -1,12 +1,12 @@
 import os
 import sys
-from sqlalchemy import text
 
 # Add the parent directory to sys.path to allow importing backend modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.models import SessionLocal, engine, Base, UserModel, CategoryModel, MenuModel
 from backend.auth import get_password_hash
+from backend.models import Base, CategoryModel, MenuModel, SessionLocal, UserModel, engine
+
 
 def seed_data():
     db = SessionLocal()
@@ -33,12 +33,108 @@ def seed_data():
         # 3. Seed Categories and Dishes
         menu_data = {
             "Супы": [
-                {"name": "Борщ Московский", "price": 380, "img": "russian_borscht_soup.png", "desc": "Густой мясной суп со свеклой и говядиной."},
-                {"name": "Щи суточные", "price": 340, "img": "russian_shchi_soup.png", "desc": "Из квашеной капусты, томленые в печи."}
+                {
+                    "name": "Борщ Московский", 
+                    "price": 380, 
+                    "img": "russian_borscht_soup.png", 
+                    "desc": "Густой мясной суп со свеклой и говядиной."
+                },
+                {
+                    "name": "Щи суточные", 
+                    "price": 340, 
+                    "img": "russian_shchi_soup.png", 
+                    "desc": "Из квашеной капусты, томленые в печи."
+                },
+                {
+                    "name": "Солянка Мясная", 
+                    "price": 450, 
+                    "img": "russian_solyanka_soup.png", 
+                    "desc": "Наваристый суп с копченостями и оливками."
+                },
+                {
+                    "name": "Уха Царская", 
+                    "price": 520, 
+                    "img": "russian_ukha_soup_royal.png", 
+                    "desc": "Из трех видов рыб с зеленью."
+                }
+            ],
+            "Закуски": [
+                {
+                    "name": "Оливье", 
+                    "price": 420, 
+                    "img": "russian_olivier_salad.png", 
+                    "desc": "Классический рецепт с телячьим языком."
+                },
+                {
+                    "name": "Сельдь под шубой", 
+                    "price": 310, 
+                    "img": "russian_herring_under_fur_coat.png", 
+                    "desc": "Слоеный салат со свеклой."
+                },
+                {
+                    "name": "Винегрет", 
+                    "price": 280, 
+                    "img": "russian_vinegret_salad.png", 
+                    "desc": "С бочковыми грибами."
+                },
+                {
+                    "name": "Холодец", 
+                    "price": 450, 
+                    "img": "russian_kholodets_aspic.png", 
+                    "desc": "Домашний из говядины с хреном."
+                }
             ],
             "Горячее": [
-                {"name": "Пельмени Сибирские", "price": 440, "img": "russian_pelmeni_dumplings.png", "desc": "Ручная лепка, говядина и свинина."},
-                {"name": "Бефстроганов", "price": 680, "img": "beef_stroganoff_with_puree.png", "desc": "Говядина в сметанном соусе с пюре."}
+                {
+                    "name": "Пельмени Сибирские", 
+                    "price": 440, 
+                    "img": "russian_pelmeni_dumplings.png", 
+                    "desc": "Ручная лепка, говядина и свинина."
+                },
+                {
+                    "name": "Бефстроганов", 
+                    "price": 680, 
+                    "img": "beef_stroganoff_with_puree.png", 
+                    "desc": "Говядина в сметанном соусе с пюре."
+                },
+                {
+                    "name": "Пожарская котлета", 
+                    "price": 490, 
+                    "img": "pozharskaya_cutlet_dish.png", 
+                    "desc": "В хрустящих сухариках."
+                },
+                {
+                    "name": "Голубцы", 
+                    "price": 460, 
+                    "img": "russian_golubtsi_cabbage_rolls_in_sauce.png", 
+                    "desc": "В томатно-сметанном соусе."
+                }
+            ],
+            "Десерты": [
+                {
+                    "name": "Блины с икрой", 
+                    "price": 750, 
+                    "img": "russian_blini_with_caviar.png", 
+                    "desc": "С красной лососевой икрой."
+                },
+                {
+                    "name": "Блины со сметаной", 
+                    "price": 250, 
+                    "img": "russian_blini_sweet_sour_cream.png", 
+                    "desc": "Сладкие со сметаной."
+                },
+                {
+                    "name": "Пирожки печеные", 
+                    "price": 180, 
+                    "img": "russian_pirozki_set.png", 
+                    "desc": "С мясом, капустой, картошкой."
+                },
+                {
+                    "name": "Медовик", 
+                    "price": 320, 
+                    "img": "russian_medovik_honey_cake.png", 
+                    "desc": "Классический рецепт."
+                }
             ]
         }
 
