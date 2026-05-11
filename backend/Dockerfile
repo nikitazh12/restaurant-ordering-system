@@ -41,4 +41,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["./backend/start.sh"]
+CMD ["bash", "./backend/start.sh"]

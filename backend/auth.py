@@ -24,7 +24,14 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 
+# Fix for bcrypt 4.1.0+ compatibility with passlib
+# https://github.com/pyca/bcrypt/issues/684
+import logging
+logging.getLogger("passlib").setLevel(logging.ERROR)
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 

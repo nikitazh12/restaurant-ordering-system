@@ -20,12 +20,14 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./backend/static:/app/backend/static
     environment:
       - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/restaurant_db
     env_file:
       - .env
     depends_on:
-
       - db
 
 volumes:

@@ -1,36 +1,28 @@
-from fastapi import FastAPI, HTTPException
-from sqlalchemy import text
-from sqlalchemy.exc import OperationalError
-
-from backend.models import engine
+import os
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from backend.models import engine, Base, SessionLocal
 from backend.routers import auth, menu, orders
 
-app = FastAPI()
+app = FastAPI(title="Restaurant Ordering System API")
 
+# Mount static files for images
+static_path = "backend/static"
+if not os.path.exists(static_path):
+    os.makedirs(os.path.join(static_path, "images"), exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# Include Routers
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(menu.router, prefix="/api/menu", tags=["menu"])
+app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
 
 @app.on_event("startup")
 def startup():
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-    except OperationalError as exc:
-        print(f"DB startup check failed: {exc}")
-        raise
-    except Exception as exc:
-        print(f"DB startup failed: {exc}")
-        raise
+    # Automatically create tables if they don't exist
+    Base.metadata.create_all(bind=engine)
 
-
-@app.get("/api/health")
-def health_check():
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return {"database": "ok"}
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail="Database unavailable") from exc
-
-
-app.include_router(menu.router, prefix="/api", tags=["Menu"])
-app.include_router(orders.router, prefix="/api", tags=["Orders"])
-app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Restaurant Ordering System API"}

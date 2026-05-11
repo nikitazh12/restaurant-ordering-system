@@ -3,7 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.models import MenuModel, OrderItemModel, OrderModel, get_db
+from backend.auth import require_admin
+from backend.models import MenuModel, OrderItemModel, OrderModel, UserModel, get_db
 from backend.schemas import Order, OrderCreate, OrderItem, OrderResponse, OrderStatusUpdate
 
 router = APIRouter()
@@ -94,6 +95,7 @@ def update_order_status(
     order_id: int,
     status_update: OrderStatusUpdate,
     db: Session = Depends(get_db),
+    admin_user: UserModel = Depends(require_admin),
 ):
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     

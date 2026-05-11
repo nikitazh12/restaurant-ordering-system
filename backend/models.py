@@ -56,10 +56,10 @@ class MenuModel(Base):
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     price = Column(Float, nullable=False)
-    category = Column(String, nullable=True)
     image = Column(String, nullable=True)
     
     categories = relationship(
+
         "CategoryModel", secondary=menu_categories, back_populates="menu_items"
     )
 
