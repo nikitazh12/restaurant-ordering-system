@@ -34,30 +34,41 @@ def get_db():
 menu_categories = Table(
     "menu_categories",
     Base.metadata,
-    Column("menu_id", Integer, ForeignKey("menu.id"), primary_key=True),
-    Column("category_id", Integer, ForeignKey("categories.id"), primary_key=True),
+    Column(
+        "menu_id",
+        Integer,
+        ForeignKey("menu.id"),
+        primary_key=True),
+    Column(
+        "category_id",
+        Integer,
+        ForeignKey("categories.id"),
+        primary_key=True),
 )
 
 
 class CategoryModel(Base):
     __tablename__ = "categories"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, nullable=True)
-    
-    menu_items = relationship("MenuModel", secondary=menu_categories, back_populates="categories")
+
+    menu_items = relationship(
+        "MenuModel",
+        secondary=menu_categories,
+        back_populates="categories")
 
 
 class MenuModel(Base):
     __tablename__ = "menu"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     price = Column(Float, nullable=False)
     image = Column(String, nullable=True)
-    
+
     categories = relationship(
 
         "CategoryModel", secondary=menu_categories, back_populates="menu_items"
@@ -66,7 +77,7 @@ class MenuModel(Base):
 
 class OrderModel(Base):
     __tablename__ = "orders"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     customer_name = Column(String, nullable=False)
     phone = Column(String, nullable=False)
@@ -78,7 +89,7 @@ class OrderModel(Base):
 
 class OrderItemModel(Base):
     __tablename__ = "order_items"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"))
     menu_item_id = Column(Integer)
@@ -87,7 +98,7 @@ class OrderItemModel(Base):
 
 class UserModel(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -96,7 +107,7 @@ class UserModel(Base):
 
 class CartItemModel(Base):
     __tablename__ = "cart_items"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     menu_item_id = Column(Integer, nullable=False)
@@ -105,7 +116,7 @@ class CartItemModel(Base):
 
 class FavoriteModel(Base):
     __tablename__ = "favorites"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     menu_item_id = Column(Integer, nullable=False)

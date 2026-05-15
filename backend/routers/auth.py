@@ -14,10 +14,13 @@ router = APIRouter()
 
 @router.post("/register", response_model=dict)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(UserModel).filter(UserModel.username == user.username).first()
+    existing_user = db.query(UserModel).filter(
+        UserModel.username == user.username).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
+        raise HTTPException(
+            status_code=400,
+            detail="Username already registered")
+
     hashed_password = get_password_hash(user.password)
     db_user = UserModel(
         username=user.username,
@@ -27,21 +30,23 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
-    return {"message": "User created successfully", "username": db_user.username}
+
+    return {
+        "message": "User created successfully",
+        "username": db_user.username}
 
 
 @router.post("/login", response_model=Token)
 def login(user_data: dict, db: Session = Depends(get_db)):
     username = user_data.get("username")
     password = user_data.get("password")
-    
+
     if not username or not password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username and password are required"
         )
-    
+
     user = authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
@@ -49,6 +54,6 @@ def login(user_data: dict, db: Session = Depends(get_db)):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}

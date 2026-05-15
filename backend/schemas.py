@@ -28,16 +28,16 @@ class MenuItem(BaseModel):
     price: float
     categories: List[Category] = []
     image: Optional[str] = None
-    
+
     model_config = {"from_attributes": True}
-    
+
     @field_validator("price")
     @classmethod
     def price_must_be_positive(cls, v: float) -> float:
         if v < 0:
             raise ValueError("Price cannot be negative")
         return v
-    
+
     @field_validator("name")
     @classmethod
     def name_must_not_be_empty(cls, v: str) -> str:
@@ -53,7 +53,7 @@ class MenuItemCreate(BaseModel):
     category: Optional[str] = Field(None, max_length=100)
     image: Optional[str] = None
     category_ids: Optional[List[int]] = None
-    
+
     @field_validator("image")
     @classmethod
     def validate_image_url(cls, v: Optional[str]) -> Optional[str]:
@@ -78,7 +78,7 @@ class MenuItemUpdate(BaseModel):
     category: Optional[str] = Field(None, max_length=100)
     image: Optional[str] = None
     category_ids: Optional[List[int]] = None
-    
+
     @field_validator("image")
     @classmethod
     def validate_image_url(cls, v: Optional[str]) -> Optional[str]:
@@ -106,13 +106,14 @@ class OrderCreate(BaseModel):
     phone: str = Field(..., min_length=10, max_length=20)
     address: str = Field(..., min_length=1, max_length=500)
     items: List[OrderItem] = Field(..., min_length=1)
-    
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
         cleaned = re.sub(r'[\s\-\(\)]', '', v)
         if not re.match(r'^\+?\d{10,15}$', cleaned):
-            raise ValueError("Phone number must be in valid format (10-15 digits)")
+            raise ValueError(
+                "Phone number must be in valid format (10-15 digits)")
         return v
 
 
@@ -171,7 +172,7 @@ class CartItem(BaseModel):
     user_id: int
     menu_item_id: int
     quantity: int
-    
+
     model_config = {"from_attributes": True}
 
 
@@ -183,5 +184,5 @@ class Favorite(BaseModel):
     id: int
     user_id: int
     menu_item_id: int
-    
+
     model_config = {"from_attributes": True}

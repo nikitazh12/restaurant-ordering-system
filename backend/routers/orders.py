@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.auth import get_current_user, require_admin
@@ -13,26 +13,32 @@ router = APIRouter()
 @router.post("/orders", response_model=Order)
 def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     if not order.customer_name or not order.phone or not order.address:
-        raise HTTPException(status_code=400, detail="Customer name, phone and address are required")
-    
+        raise HTTPException(
+            status_code=400,
+            detail="Customer name, phone and address are required")
+
     if not order.items or len(order.items) == 0:
-        raise HTTPException(status_code=400, detail="Order must contain at least one item")
-    
+        raise HTTPException(status_code=400,
+                            detail="Order must contain at least one item")
+
     total = 0.0
     for item in order.items:
         if item.quantity <= 0:
-            raise HTTPException(status_code=400, detail="Quantity must be positive")
-        
-        menu_item = db.query(MenuModel).filter(MenuModel.id == item.menu_item_id).first()
-        
+            raise HTTPException(
+                status_code=400,
+                detail="Quantity must be positive")
+
+        menu_item = db.query(MenuModel).filter(
+            MenuModel.id == item.menu_item_id).first()
+
         if menu_item is None:
             raise HTTPException(
                 status_code=400,
                 detail=f"Menu item with id {item.menu_item_id} not found",
             )
-        
+
         total += menu_item.price * item.quantity
-    
+
     new_order = OrderModel(
         customer_name=order.customer_name,
         phone=order.phone,
@@ -41,11 +47,11 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
         status="pending",
         created_at=datetime.now()
     )
-    
+
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-    
+
     for item in order.items:
         order_item = OrderItemModel(
             order_id=new_order.id,
@@ -53,13 +59,16 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
             quantity=item.quantity
         )
         db.add(order_item)
-    
+
     db.commit()
-    
+
     order_items = []
     for item in order.items:
-        order_items.append(OrderItem(menu_item_id=item.menu_item_id, quantity=item.quantity))
-    
+        order_items.append(
+            OrderItem(
+                menu_item_id=item.menu_item_id,
+                quantity=item.quantity))
+
     return Order(
         id=new_order.id,
         customer_name=new_order.customer_name,
@@ -78,26 +87,29 @@ def create_order_from_cart(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ):
-    cart_items = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
-    
+    cart_items = db.query(CartItemModel).filter(
+        CartItemModel.user_id == current_user.id).all()
+
     if not cart_items:
         raise HTTPException(status_code=400, detail="Cart is empty")
-    
+
     total = 0.0
     order_items_data = []
-    
+
     for cart_item in cart_items:
-        menu_item = db.query(MenuModel).filter(MenuModel.id == cart_item.menu_item_id).first()
-        
+        menu_item = db.query(MenuModel).filter(
+            MenuModel.id == cart_item.menu_item_id).first()
+
         if menu_item is None:
             raise HTTPException(
                 status_code=400,
                 detail=f"Menu item with id {cart_item.menu_item_id} not found",
             )
-        
+
         total += menu_item.price * cart_item.quantity
-        order_items_data.append({"menu_item_id": cart_item.menu_item_id, "quantity": cart_item.quantity})
-    
+        order_items_data.append(
+            {"menu_item_id": cart_item.menu_item_id, "quantity": cart_item.quantity})
+
     new_order = OrderModel(
         customer_name=order_data.customer_name,
         phone=order_data.phone,
@@ -106,11 +118,11 @@ def create_order_from_cart(
         status="pending",
         created_at=datetime.now()
     )
-    
+
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-    
+
     for item_data in order_items_data:
         order_item = OrderItemModel(
             order_id=new_order.id,
@@ -118,14 +130,15 @@ def create_order_from_cart(
             quantity=item_data["quantity"]
         )
         db.add(order_item)
-    
+
     db.commit()
-    
-    db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).delete()
+
+    db.query(CartItemModel).filter(
+        CartItemModel.user_id == current_user.id).delete()
     db.commit()
-    
+
     order_items = [OrderItem(**item) for item in order_items_data]
-    
+
     return Order(
         id=new_order.id,
         customer_name=new_order.customer_name,
@@ -141,7 +154,7 @@ def create_order_from_cart(
 @router.get("/orders", response_model=list[OrderResponse])
 def get_orders(db: Session = Depends(get_db)):
     orders = db.query(OrderModel).order_by(OrderModel.created_at.desc()).all()
-    
+
     result = []
     for order in orders:
         result.append(OrderResponse(
@@ -164,10 +177,10 @@ def update_order_status(
     admin_user: UserModel = Depends(require_admin),
 ):
     order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
-    
+
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    
+
     valid_statuses = [
         "pending",
         "confirmed",
@@ -179,13 +192,14 @@ def update_order_status(
     if status_update.status not in valid_statuses:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+            detail=f"Invalid status. Must be one of: {
+                ', '.join(valid_statuses)}",
         )
-    
+
     order.status = status_update.status
     db.commit()
     db.refresh(order)
-    
+
     return OrderResponse(
         id=order.id,
         customer_name=order.customer_name,

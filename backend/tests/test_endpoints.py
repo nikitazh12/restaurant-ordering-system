@@ -19,17 +19,17 @@ def client_mock(mock_db_session):
             yield mock_db_session
         finally:
             pass
-    
+
     with patch('backend.main.engine'):
         with patch('backend.models.SessionLocal', return_value=mock_db_session):
             from backend.main import app
             from backend.models import get_db
-            
+
             app.dependency_overrides[get_db] = override_get_db
-            
+
             with TestClient(app) as c:
                 yield c
-            
+
             app.dependency_overrides.clear()
 
 
@@ -86,9 +86,9 @@ class TestAuthEndpoints:
     def test_register_user(self, client_mock: TestClient, mock_db_session):
         import uuid
         unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
-        
+
         mock_db_session.query.return_value.filter.return_value.first.return_value = None
-        
+
         payload = {
             "username": unique_username,
             "password": "securepass123",
@@ -99,21 +99,24 @@ class TestAuthEndpoints:
         data = response.json()
         assert data["username"] == unique_username
 
-    def test_register_duplicate_user(self, client_mock: TestClient, mock_db_session):
+    def test_register_duplicate_user(
+            self,
+            client_mock: TestClient,
+            mock_db_session):
         import uuid
         unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
-        
+
         mock_user = MagicMock()
         mock_user.username = unique_username
-        
+
         def query_side_effect(model):
             filter_mock = MagicMock()
             if model.__name__ == 'UserModel':
                 filter_mock.first.return_value = mock_user
             return filter_mock
-        
+
         mock_db_session.query.side_effect = query_side_effect
-        
+
         payload = {
             "username": unique_username,
             "password": "securepass123",
@@ -125,13 +128,13 @@ class TestAuthEndpoints:
     def test_login_success(self, client_mock: TestClient, mock_db_session):
         import uuid
         unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
-        
+
         from backend.auth import get_password_hash
         mock_user = MagicMock()
         mock_user.username = unique_username
         mock_user.hashed_password = get_password_hash("testpass")
         mock_user.role = "user"
-        
+
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_user
 
         payload = {"username": unique_username, "password": "testpass"}
@@ -141,24 +144,30 @@ class TestAuthEndpoints:
         assert "access_token" in data
         assert data["token_type"] == "bearer"
 
-    def test_login_wrong_password(self, client_mock: TestClient, mock_db_session):
+    def test_login_wrong_password(
+            self,
+            client_mock: TestClient,
+            mock_db_session):
         import uuid
         unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
-        
+
         from backend.auth import get_password_hash
         mock_user = MagicMock()
         mock_user.username = unique_username
         mock_user.hashed_password = get_password_hash("testpass")
-        
+
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_user
 
         payload = {"username": unique_username, "password": "wrongpass"}
         response = client_mock.post("/api/auth/login", json=payload)
         assert response.status_code == 401
 
-    def test_login_nonexistent_user(self, client_mock: TestClient, mock_db_session):
+    def test_login_nonexistent_user(
+            self,
+            client_mock: TestClient,
+            mock_db_session):
         mock_db_session.query.return_value.filter.return_value.first.return_value = None
-        
+
         payload = {"username": "nouser", "password": "anypass"}
         response = client_mock.post("/api/auth/login", json=payload)
         assert response.status_code == 401

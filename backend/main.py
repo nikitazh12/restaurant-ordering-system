@@ -22,10 +22,12 @@ app.include_router(orders.router, prefix="/api", tags=["orders"])
 app.include_router(cart.router, prefix="/api", tags=["cart"])
 app.include_router(favorites.router, prefix="/api", tags=["favorites"])
 
+
 @app.on_event("startup")
 def startup():
     # Automatically create tables if they don't exist
     Base.metadata.create_all(bind=engine)
+
 
 @app.get("/")
 def read_root():

@@ -15,14 +15,15 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    # During development/testing we might want a fallback, 
+    # During development/testing we might want a fallback,
     # but for production it MUST be set.
     if os.getenv("ENV") == "production":
         raise RuntimeError("SECRET_KEY environment variable is not set!")
     SECRET_KEY = "dev-secret-key-replace-me"
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 
 # Fix for bcrypt 4.1.0+ compatibility with passlib
@@ -52,7 +53,9 @@ def authenticate_user(db, username: str, password: str):
     return user
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+        data: dict,
+        expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
