@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from backend.auth import require_admin
-from backend.models import MenuModel, OrderItemModel, OrderModel, UserModel, get_db
+from backend.auth import get_current_user, require_admin
+from backend.models import CartItemModel, MenuModel, OrderItemModel, OrderModel, UserModel, get_db
 from backend.schemas import Order, OrderCreate, OrderItem, OrderResponse, OrderStatusUpdate
 
 router = APIRouter()
@@ -59,6 +59,72 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     order_items = []
     for item in order.items:
         order_items.append(OrderItem(menu_item_id=item.menu_item_id, quantity=item.quantity))
+    
+    return Order(
+        id=new_order.id,
+        customer_name=new_order.customer_name,
+        phone=new_order.phone,
+        address=new_order.address,
+        items=order_items,
+        total_amount=new_order.total_amount,
+        status=new_order.status,
+        created_at=new_order.created_at
+    )
+
+
+@router.post("/orders/from-cart", response_model=Order)
+def create_order_from_cart(
+    order_data: OrderCreate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    cart_items = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
+    
+    if not cart_items:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+    total = 0.0
+    order_items_data = []
+    
+    for cart_item in cart_items:
+        menu_item = db.query(MenuModel).filter(MenuModel.id == cart_item.menu_item_id).first()
+        
+        if menu_item is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Menu item with id {cart_item.menu_item_id} not found",
+            )
+        
+        total += menu_item.price * cart_item.quantity
+        order_items_data.append({"menu_item_id": cart_item.menu_item_id, "quantity": cart_item.quantity})
+    
+    new_order = OrderModel(
+        customer_name=order_data.customer_name,
+        phone=order_data.phone,
+        address=order_data.address,
+        total_amount=total,
+        status="pending",
+        created_at=datetime.now()
+    )
+    
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    
+    for item_data in order_items_data:
+        order_item = OrderItemModel(
+            order_id=new_order.id,
+            menu_item_id=item_data["menu_item_id"],
+            quantity=item_data["quantity"]
+        )
+        db.add(order_item)
+    
+    db.commit()
+    
+    db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).delete()
+    db.commit()
+    
+    order_items = [OrderItem(**item) for item in order_items_data]
     
     return Order(
         id=new_order.id,

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from backend.models import Base, engine
-from backend.routers import auth, menu, orders
+from backend.routers import auth, cart, favorites, menu, orders
 
 app = FastAPI(title="Restaurant Ordering System API")
 
@@ -19,6 +19,8 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(menu.router, prefix="/api", tags=["menu"])
 app.include_router(orders.router, prefix="/api", tags=["orders"])
+app.include_router(cart.router, prefix="/api", tags=["cart"])
+app.include_router(favorites.router, prefix="/api", tags=["favorites"])
 
 @app.on_event("startup")
 def startup():

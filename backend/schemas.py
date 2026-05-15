@@ -155,3 +155,33 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class CartItemCreate(BaseModel):
+    menu_item_id: int
+    quantity: int = Field(..., gt=0)
+
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., gt=0)
+
+
+class CartItem(BaseModel):
+    id: int
+    user_id: int
+    menu_item_id: int
+    quantity: int
+    
+    model_config = {"from_attributes": True}
+
+
+class FavoriteCreate(BaseModel):
+    menu_item_id: int
+
+
+class Favorite(BaseModel):
+    id: int
+    user_id: int
+    menu_item_id: int
+    
+    model_config = {"from_attributes": True}

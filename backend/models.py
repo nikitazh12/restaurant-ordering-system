@@ -92,3 +92,20 @@ class UserModel(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
+
+
+class CartItemModel(Base):
+    __tablename__ = "cart_items"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    menu_item_id = Column(Integer, nullable=False)
+    quantity = Column(Integer, default=1)
+
+
+class FavoriteModel(Base):
+    __tablename__ = "favorites"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    menu_item_id = Column(Integer, nullable=False)
