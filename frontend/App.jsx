@@ -4,6 +4,8 @@ import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import Cart from "./pages/Cart";
+import AdminOrders from "./pages/AdminOrders";
+import AdminProduct from "./pages/AdminProduct";
 
 export default function App() {
   return (
@@ -14,6 +16,8 @@ export default function App() {
         <Route path="/menu" element={<Menu />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/admin/product" element={<AdminProduct />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
       </Routes>
     </BrowserRouter>
   );
