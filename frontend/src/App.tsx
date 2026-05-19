@@ -11,7 +11,7 @@ import { FavoritesPage } from "@pages/favorites";
 import { useAuthStore } from "@entities/user/model/auth-store";
 import { useCartStore } from "@entities/cart/model/cart-store";
 import { useFavoriteStore } from "@entities/favorite/model/favorite-store";
-import { useToast } from "./shared/lib/toast";
+
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -19,7 +19,7 @@ function App() {
   const initializeAuth = useAuthStore((state) => state.initialize);
   const loadCart = useCartStore((state) => state.loadCart);
   const loadFavorites = useFavoriteStore((state) => state.loadFavorites);
-  const { toasts } = useToast();
+
 
   useEffect(() => {
     initializeAuth();
