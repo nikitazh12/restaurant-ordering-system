@@ -1,102 +1,56 @@
-# Restaurant Ordering System
+## Production deployment
 
-Групповой проект веб-сервиса доставки еды. Backend на FastAPI, Frontend на React/Vite.
+Проект развернут на VPS-сервере под управлением Ubuntu 22.04 LTS.
 
-## Быстрый запуск
+Для публикации приложения использованы:
 
-```bash
-docker compose up --build
-```
+* Docker и Docker Compose для контейнеризации backend, frontend и PostgreSQL;
+* nginx в роли reverse proxy;
+* домен `food-diploma.ru`;
+* HTTPS-сертификат Let's Encrypt;
+* UFW для ограничения входящих подключений;
+* GitHub Actions для автоматической проверки проекта и публикации Docker-образов;
+* Docker Hub для хранения собранных образов backend и frontend;
+* cron и `pg_dump` для резервного копирования базы данных.
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- Swagger docs: http://localhost:8000/docs
-- Database: localhost:5433
+Production-схема развертывания:
 
-Остановить: `docker compose down`
+* frontend доступен через `https://food-diploma.ru`;
+* backend API проксируется через `https://food-diploma.ru/api`;
+* Swagger/OpenAPI документация доступна через `https://food-diploma.ru/docs`;
+* PostgreSQL работает внутри Docker-сети и не опубликован наружу;
+* наружу открыты только порты `22`, `80`, `443`.
 
-## Технологический стек
+### Environment variables
 
-**Backend**: Python 3.11, FastAPI, SQLAlchemy, PostgreSQL 16, JWT, Alembic  
-**Frontend**: React 19, Vite, React Router  
-**DevOps**: Docker, Docker Compose, GitHub Actions (CI/CD)  
-**Testing**: Pytest (backend), ESLint (frontend)
+Для запуска проекта используется файл `.env`. Реальный `.env` не хранится в репозитории, так как содержит секретные значения. Пример переменных находится в `.env.example`.
 
-## Структура проекта
+### CI/CD
 
-```
-.
-├── backend/              # FastAPI сервер
-│   ├── routers/          # API endpoints (auth, cart, menu, orders, favorites)
-│   ├── migrations/        # Alembic миграции БД
-│   ├── tests/             # Unit тесты (pytest)
-│   ├── models.py          # SQLAlchemy модели
-│   ├── auth.py            # JWT и безопасность
-│   ├── Dockerfile         # Build config
-│   └── requirements.txt
-├── frontend/             # React + Vite
-│   ├── pages/             # Компоненты страниц (Home, Menu, Cart, Admin)
-│   ├── components/        # Переиспользуемые компоненты
-│   ├── Dockerfile         # Build config (multi-stage)
-│   ├── nginx.conf         # SPA routing
-│   ├── vite.config.js
-│   └── package.json
-├── docker-compose.yml    # Оркестрация 3 сервисов (db, backend, frontend)
-└── .github/workflows/    # GitHub Actions
-    ├── test.yml          # Линтинг и тесты на PR
-    └── publish.yml       # Линтинг + тесты + деплой на push в main
-```
+В репозитории настроен workflow GitHub Actions. При изменениях в ветке `main` выполняются:
 
-## Разработка
+* проверка backend;
+* проверка frontend;
+* сборка и публикация Docker-образов в Docker Hub.
 
-### Локальный запуск
+Docker-образы публикуются только после успешного прохождения проверок backend и frontend.
 
-**Backend** (из папки backend):
-```bash
-python -m uvicorn main:app --reload
-```
+### Deploy
 
-**Frontend** (из папки frontend):
-```bash
-npm install
-npm run dev
-```
-
-### Тестирование и линтинг
+Для обновления приложения на сервере используется скрипт:
 
 ```bash
-# Backend тесты
-cd backend && pytest tests
-
-# Backend lint
-ruff check backend
-
-# Frontend lint
-npm run lint --prefix frontend
-
-# Frontend build
-npm run build --prefix frontend
+./scripts/deploy.sh
 ```
 
-### Database миграции
+Скрипт получает актуальную версию проекта из GitHub, пересобирает Docker-контейнеры и запускает сервисы через Docker Compose.
+
+### Database backup
+
+Для резервного копирования базы данных используется скрипт:
 
 ```bash
-docker exec -it restaurant_backend alembic revision --autogenerate -m "описание"
-docker exec -it restaurant_backend alembic upgrade head
+./scripts/backup_db.sh
 ```
 
-## CI/CD
-
-**test.yml**: На PR в main — прогоняет тесты и lint (backend + frontend)
-
-**publish.yml**: На push/merge в main:
-1. Запускает тесты (backend + frontend)
-2. Если оба прошли — собирает и пушит образы в Docker Hub
-
-Деплой блокируется при ошибках тестов/линтинга.
-
-## GitHub Secrets
-
-Для автоматического деплоя нужны:
-- `DOCKER_USERNAME` — Docker Hub логин
-- `DOCKER_PASSWORD` — Docker Hub Access Token
+Скрипт создает SQL-дамп PostgreSQL через `pg_dump` и сохраняет его в директорию `~/backups`. Для автоматического выполнения резервного копирования используется cron.
