@@ -84,29 +84,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build backend
+      - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          push: false
-          load: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/restaurant-backend:latest
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/restaurant-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/restaurant-backend:${{ github.sha }}
 
-      - name: Build frontend
+      - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          push: false
-          load: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/restaurant-frontend:latest
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/restaurant-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/restaurant-frontend:${{ github.sha }}
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
-
-      - name: Push backend
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/restaurant-backend:latest
-
-      - name: Push frontend
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/restaurant-frontend:latest
 
   deploy:
     runs-on: ubuntu-latest

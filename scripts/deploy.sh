@@ -16,12 +16,18 @@ git pull --ff-only
 echo "Validating Docker Compose configuration..."
 docker compose config >/dev/null
 
-echo "Building and starting services..."
-if ! docker compose up -d --build; then
+echo "Pulling latest images from registry..."
+docker compose pull
+
+echo "Recreating services..."
+if ! docker compose up -d; then
   echo "ERROR: docker compose up failed. Last backend logs:" >&2
   docker compose logs -n 100 backend >&2 || true
   exit 1
 fi
+
+echo "Removing dangling images..."
+docker image prune -f >/dev/null || true
 
 echo "Current service status:"
 docker compose ps
