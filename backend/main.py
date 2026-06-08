@@ -4,17 +4,34 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.models import Base, engine
+from backend.models import engine  # noqa: F401 - kept for tests that patch backend.main.engine
 from backend.routers import auth, cart, favorites, menu, orders
 
-app = FastAPI(title="Restaurant Ordering System API")
+
+def parse_cors_origins(value: str | None) -> list[str]:
+    if not value:
+        return [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ]
+
+    return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
+app = FastAPI(
+    title="Restaurant Ordering System API",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешить все домены
+    allow_origins=parse_cors_origins(os.getenv("BACKEND_CORS_ORIGINS")),
     allow_credentials=True,
-    allow_methods=["*"],  # Разрешить все методы
-    allow_headers=["*"],  # Разрешить все заголовки
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Mount static files for images
@@ -30,12 +47,6 @@ app.include_router(menu.router, prefix="/api", tags=["menu"])
 app.include_router(orders.router, prefix="/api", tags=["orders"])
 app.include_router(cart.router, prefix="/api", tags=["cart"])
 app.include_router(favorites.router, prefix="/api", tags=["favorites"])
-
-
-@app.on_event("startup")
-def startup():
-    # Automatically create tables if they don't exist
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")

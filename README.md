@@ -1,56 +1,81 @@
-## Production deployment
+# Restaurant Ordering System
 
-Проект развернут на VPS-сервере под управлением Ubuntu 22.04 LTS.
+Групповой проект веб-сервиса доставки еды. Backend на FastAPI, Frontend на React/Vite.
 
-Для публикации приложения использованы:
+## Быстрый запуск через Docker Compose
 
-* Docker и Docker Compose для контейнеризации backend, frontend и PostgreSQL;
-* nginx в роли reverse proxy;
-* домен `food-diploma.ru`;
-* HTTPS-сертификат Let's Encrypt;
-* UFW для ограничения входящих подключений;
-* GitHub Actions для автоматической проверки проекта и публикации Docker-образов;
-* Docker Hub для хранения собранных образов backend и frontend;
-* cron и `pg_dump` для резервного копирования базы данных.
-
-Production-схема развертывания:
-
-* frontend доступен через `https://food-diploma.ru`;
-* backend API проксируется через `https://food-diploma.ru/api`;
-* Swagger/OpenAPI документация доступна через `https://food-diploma.ru/docs`;
-* PostgreSQL работает внутри Docker-сети и не опубликован наружу;
-* наружу открыты только порты `22`, `80`, `443`.
-
-### Environment variables
-
-Для запуска проекта используется файл `.env`. Реальный `.env` не хранится в репозитории, так как содержит секретные значения. Пример переменных находится в `.env.example`.
-
-### CI/CD
-
-В репозитории настроен workflow GitHub Actions. При изменениях в ветке `main` выполняются:
-
-* проверка backend;
-* проверка frontend;
-* сборка и публикация Docker-образов в Docker Hub.
-
-Docker-образы публикуются только после успешного прохождения проверок backend и frontend.
-
-### Deploy
-
-Для обновления приложения на сервере используется скрипт:
+Перед запуском нужен файл `.env` в корне проекта. Реальные секреты не хранятся в репозитории: `.env` создается локально или на сервере и не коммитится.
 
 ```bash
+cp .env.example .env
+# заполнить значения в .env
+docker compose up -d --build
+```
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api
+- Swagger docs: http://localhost:8000/api/docs
+- Database: Docker volume `postgres_data`
+
+Остановить: `docker compose down`. Данные БД сохраняются в Docker volume.
+
+## Технологический стек
+
+**Backend**: Python 3.11, FastAPI, SQLAlchemy, PostgreSQL 16, JWT, Alembic
+**Frontend**: React 19, Vite, React Router
+**DevOps**: Docker, Docker Compose, GitHub Actions, nginx reverse proxy
+**Testing**: Pytest (backend), ESLint (frontend)
+
+## Разработка без Docker
+
+**Backend**:
+```bash
+cd backend
+python -m uvicorn main:app --reload
+```
+
+**Frontend**:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Тестирование и линтинг
+
+```bash
+ruff check backend
+pytest backend/tests
+npm run lint --prefix frontend
+npm run build --prefix frontend
+```
+
+## Деплой на VPS
+
+Текущий сценарий рассчитан на локальную пересборку образов на сервере:
+
+```bash
+cd /home/deploy/apps/restaurant-ordering-system
 ./scripts/deploy.sh
 ```
 
-Скрипт получает актуальную версию проекта из GitHub, пересобирает Docker-контейнеры и запускает сервисы через Docker Compose.
+На сервере реальные значения секретов находятся только в `.env`. Backend и frontend опубликованы только на `127.0.0.1`; внешний доступ идет через nginx reverse proxy:
 
-### Database backup
+- `https://food-diploma.ru` -> `http://127.0.0.1:3000`
+- `https://food-diploma.ru/api` -> `http://127.0.0.1:8000/api`
+- `https://food-diploma.ru/api/docs` -> `http://127.0.0.1:8000/api/docs`
 
-Для резервного копирования базы данных используется скрипт:
+## Backup БД
 
 ```bash
 ./scripts/backup_db.sh
 ```
 
-Скрипт создает SQL-дамп PostgreSQL через `pg_dump` и сохраняет его в директорию `~/backups`. Для автоматического выполнения резервного копирования используется cron.
+Скрипт читает `POSTGRES_USER` и `POSTGRES_DB` из `.env`, сохраняет gzip backup в `backups/` и удаляет старые `.sql.gz` файлы старше 7 дней.
+
+## CI/CD
+
+- `.github/workflows/test.yml`: тесты и lint на pull request.
+- `.github/workflows/publish.yml`: сборка и публикация Docker images на push в `main`.
+
+Для production frontend image в GitHub Actions нужно завести variable `VITE_API_URL=https://food-diploma.ru/api`.
